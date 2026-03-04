@@ -38,6 +38,13 @@ const Quiz = () => {
     //     }
     // }, []);
 
+    useEffect(() => {
+        if (data.length > 0 && currentIndex < data.length) {
+            const opts = [...data[currentIndex].incorrect_answers, data[currentIndex].correct_answer]
+            setOptions(opts.sort(() => Math.random() - 0.5))
+        }
+    }, [currentIndex, data])
+
     function onSubmit(data) {
         const amount = data.amount;
         const category = params.id;
@@ -49,17 +56,6 @@ const Quiz = () => {
         console.log(currentIndex)
     }
 
-    function getOptions(question) {
-        let option = [...question.incorrect_answers, question.correct_answer];
-        return option.sort(() => Math.random() - 0.5);
-    }
-    useEffect(() => {
-        if (data.length > 0 && currentIndex < data.length) {
-            const opts = [...data[currentIndex].incorrect_answers, data[currentIndex].correct_answer]
-            setOptions(opts.sort(() => Math.random() - 0.5))
-        }
-    }, [currentIndex, data])
-
     // claude changed this
     function handleAnswer(option) {
         if (tapped) return;
@@ -69,7 +65,6 @@ const Quiz = () => {
         if (option === data[currentIndex].correct_answer) {
             setScore(prev => prev + 1);
         }
-        // claude changed this — removed score - 1 to prevent negative scores
     }
 
     // claude changed this
