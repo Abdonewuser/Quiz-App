@@ -1,15 +1,7 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Cards from './component/Cards'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Homepage from './component/Homepage'
 import Quiz from './component/Quiz'
-
-
-
-
 
 function App() {
   const router = createBrowserRouter([
@@ -22,8 +14,6 @@ function App() {
       element: <Quiz />
     }
   ])
-
-  // 
 
   /** To get the number of questions in a category: https://opentdb.com/api_count.php?category=9
  {
