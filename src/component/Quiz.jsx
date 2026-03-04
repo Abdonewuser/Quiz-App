@@ -5,7 +5,6 @@ import "./Quiz.css"
 
 
 const Quiz = () => {
-    // Here we are getting the id, which is also the category number to be used in the api
     const params = useParams();
     const quizRef = useRef(null);
     const [data, setData] = useState([]);
@@ -17,13 +16,13 @@ const Quiz = () => {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [score, setScore] = useState(0)
     const [tapped, setTapped] = useState(false)
+    const [answeredOption, setAnsweredOption] = useState(null) // claude changed this
+    const [options, setOptions] = useState([])
 
-    // I am using to add animation when the section is scrolled to.
     // useEffect(() => {
     //     const sections = document.querySelectorAll(".section");
 
     //     const observer = new IntersectionObserver((entries) => {
-    //         // Used a for loop because entries is an array.
     //         entries.forEach((entry) => {
     //             if (entry.isIntersecting) {
     //                 // TODO: Add show class to the section
@@ -31,7 +30,6 @@ const Quiz = () => {
     //         })
     //     }, { threshold: 0.3 });
 
-    //     // Setting the observer on each section
     //     sections.forEach((section) => {
     //         observer.observe(section);
     //     })
@@ -40,7 +38,6 @@ const Quiz = () => {
     //     }
     // }, []);
 
-    // Function to handle submit click
     function onSubmit(data) {
         const amount = data.amount;
         const category = params.id;
@@ -48,53 +45,42 @@ const Quiz = () => {
         const type = data.type;
         const url = `https://opentdb.com/api.php?amount=${amount}&category=${category}&difficulty=${diffcuilty}&type=${type}`;
         getData(url)
-
-        // To scroll to the quiz section
         quizRef.current.scrollIntoView({ behaviour: "smooth" });
-
-        // Set data in quiz section
-
+        console.log(currentIndex)
     }
 
     function getOptions(question) {
-        /**
-         * {
-        "type": "multiple",
-        "difficulty": "easy",
-        "category": "General Knowledge",
-        "question": "Why is the night sky dark? ",
-        "correct_answer": "The universe is finite in age and size",
-        "incorrect_answers": [
-        "Dust clouds absorb light ",
-        "Redshift doesn&#039;t let us see distant stars ",
-        "Quantum mechanics"
-            ]
-        }
-         */
         let option = [...question.incorrect_answers, question.correct_answer];
         return option.sort(() => Math.random() - 0.5);
-        // return option;
-
     }
+    useEffect(() => {
+        if (data.length > 0 && currentIndex < data.length) {
+            const opts = [...data[currentIndex].incorrect_answers, data[currentIndex].correct_answer]
+            setOptions(opts.sort(() => Math.random() - 0.5))
+        }
+    }, [currentIndex, data])
 
-    function handleAnswer(option, e) {
+    // claude changed this
+    function handleAnswer(option) {
         if (tapped) return;
-
-        // To avoid double tap
         setTapped(true);
+        setAnsweredOption(option); // claude changed this
+
         if (option === data[currentIndex].correct_answer) {
             setScore(prev => prev + 1);
-        } else {
-            // Todo: Disable all the buttons in case of wrong and also change the e.target background color to red
-            setScore(prev => prev - 1);
         }
-
-
+        // claude changed this — removed score - 1 to prevent negative scores
     }
+
+    // claude changed this
     function handleNext() {
         setTapped(false);
+        setAnsweredOption(null); // claude changed this
         setCurrentIndex(prev => prev + 1);
-        // TODO: Enable all the buttons again
+    }
+
+    function restart() {
+        setCurrentIndex(0);
     }
 
     async function getData(url) {
@@ -152,7 +138,6 @@ const Quiz = () => {
 
             <section ref={quizRef} className='quiz-section'>
 
-                {/* Loading */}
                 {data.length === 0 && (
                     <div className="quiz-loading">
                         <span className="quiz-loading-dot" />
@@ -161,16 +146,15 @@ const Quiz = () => {
                     </div>
                 )}
 
-                {/* Score screen */}
                 {data.length > 0 && currentIndex >= data.length && (
                     <div className="quiz-score-screen">
                         <p className="quiz-score-label">Final Score</p>
                         <h2 className="quiz-score-value">{score}<span>/{data.length}</span></h2>
                         <p className="quiz-score-sub">{score >= data.length * 0.7 ? '🏆 Great job!' : '📚 Keep practicing!'}</p>
+                        <button className="quiz-restart-btn" onClick={restart}>Restart Quiz ↺</button>
                     </div>
                 )}
 
-                {/* Question */}
                 {data.length > 0 && currentIndex < data.length && (
                     <div className="quiz-card-wrap">
                         <div className="quiz-progress-bar">
@@ -181,18 +165,29 @@ const Quiz = () => {
                         </div>
                         <p className="quiz-counter">{currentIndex + 1} / {data.length}</p>
                         <p className="quiz-question">{data[currentIndex].question}</p>
+
+                        {/* claude changed this — added disabled, correct, wrong classes */}
                         <div className="quiz-options">
-                            {getOptions(data[currentIndex]).map((option, index) => (
+                            {options.map((option, index) => (
                                 <button
                                     key={index}
-                                    className="quiz-option-btn"
-                                    onClick={(e) => handleAnswer(option, e)}
+                                    className={`quiz-option-btn ${tapped // After user has selected an answer...
+                                        ? option === data[currentIndex].correct_answer
+                                            ? 'correct'         // ...always highlight the correct answer in green
+                                            : option === answeredOption
+                                                ? 'wrong'       // ...highlight what the user picked in red (if wrong)
+                                                : 'dimmed'      // ...fade out all other irrelevant options
+                                        : ''                    // Before any selection: no extra classes
+                                        }`}
+                                    onClick={() => handleAnswer(option)}
+                                    disabled={tapped} // claude changed this
                                 >
                                     <span className="quiz-option-letter">{String.fromCharCode(65 + index)}</span>
                                     <span className="quiz-option-text">{option}</span>
                                 </button>
                             ))}
                         </div>
+
                         {tapped && (
                             <button className="quiz-next-btn" onClick={handleNext}>
                                 Next Question →
@@ -202,9 +197,6 @@ const Quiz = () => {
                 )}
 
             </section>
-
-
-
         </div>
     )
 }
