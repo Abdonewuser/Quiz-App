@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom'
 import "./Quiz.css"
@@ -8,6 +8,7 @@ const Quiz = () => {
     // Here we are getting the id, which is also the category number to be used in the api
     const params = useParams();
     const quizRef = useRef(null);
+    const [data, setData] = useState([]);
     const {
         register,
         handleSubmit,
@@ -15,6 +16,7 @@ const Quiz = () => {
         formState: { errors },
     } = useForm()
 
+    // I am using to add animation when the section is scrolled to.
     useEffect(() => {
         const sections = document.querySelectorAll(".section");
 
@@ -45,6 +47,7 @@ const Quiz = () => {
         const url = `https://opentdb.com/api.php?amount=${amount}&category=${category}&difficulty=${diffcuilty}&type=${type}`;
         getData(url)
 
+        // To scroll to the quiz section
         quizRef.current.scrollIntoView({ behaviour: "smooth" });
     }
 
@@ -55,6 +58,7 @@ const Quiz = () => {
             if (!res.ok) { throw new Error("Internal Server Error") }
             const data = await res.json();
             console.log(data.results);
+            setData(data.results);
         } catch (err) {
             console.error(err.message);
         }
@@ -102,10 +106,8 @@ const Quiz = () => {
             </section>
 
             <section ref={quizRef} className='quiz' style={{ height: "100vh", backgroundColor: "#6310c2ff" }} >
-                <p style={{}}>I am the quiz section</p>
+                <p style={{}}>{`I am data ${data[0].type}`}</p>
             </section>
-
-            {/* This div is for test */}
 
 
 
