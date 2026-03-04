@@ -9,36 +9,38 @@ const Quiz = () => {
     const params = useParams();
     const quizRef = useRef(null);
     const [data, setData] = useState([]);
+
     const {
         register,
-        handleSubmit,
-        watch,
-        formState: { errors },
+        handleSubmit
     } = useForm()
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [score, setScore] = useState(0)
+    const [tapped, setTapped] = useState(false)
 
     // I am using to add animation when the section is scrolled to.
-    useEffect(() => {
-        const sections = document.querySelectorAll(".section");
+    // useEffect(() => {
+    //     const sections = document.querySelectorAll(".section");
 
-        const observer = new IntersectionObserver((entries) => {
-            // Used a for loop because entries is an array.
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    // TODO: Add show class to the section
-                }
-            })
-        }, { threshold: 0.3 });
+    //     const observer = new IntersectionObserver((entries) => {
+    //         // Used a for loop because entries is an array.
+    //         entries.forEach((entry) => {
+    //             if (entry.isIntersecting) {
+    //                 // TODO: Add show class to the section
+    //             }
+    //         })
+    //     }, { threshold: 0.3 });
 
-        // Setting the observer on each section
-        sections.forEach((section) => {
-            observer.observe(section);
-        })
-        return () => {
-            observer.disconnect();
-        }
-    }, []);
+    //     // Setting the observer on each section
+    //     sections.forEach((section) => {
+    //         observer.observe(section);
+    //     })
+    //     return () => {
+    //         observer.disconnect();
+    //     }
+    // }, []);
 
-    // Function to handle submit button click
+    // Function to handle submit click
     function onSubmit(data) {
         const amount = data.amount;
         const category = params.id;
@@ -49,6 +51,50 @@ const Quiz = () => {
 
         // To scroll to the quiz section
         quizRef.current.scrollIntoView({ behaviour: "smooth" });
+
+        // Set data in quiz section
+
+    }
+
+    function getOptions(question) {
+        /**
+         * {
+        "type": "multiple",
+        "difficulty": "easy",
+        "category": "General Knowledge",
+        "question": "Why is the night sky dark? ",
+        "correct_answer": "The universe is finite in age and size",
+        "incorrect_answers": [
+        "Dust clouds absorb light ",
+        "Redshift doesn&#039;t let us see distant stars ",
+        "Quantum mechanics"
+            ]
+        }
+         */
+        let option = [...question.incorrect_answers, question.correct_answer];
+        return option.sort(() => Math.random() - 0.5);
+        // return option;
+
+    }
+
+    function handleAnswer(option, e) {
+        if (tapped) return;
+
+        // To avoid double tap
+        setTapped(true);
+        if (option === data[currentIndex].correct_answer) {
+            setScore(prev => prev + 1);
+        } else {
+            // Todo: Disable all the buttons in case of wrong and also change the e.target background color to red
+            setScore(prev => prev - 1);
+        }
+
+
+    }
+    function handleNext() {
+        setTapped(false);
+        setCurrentIndex(prev => prev + 1);
+        // TODO: Enable all the buttons again
     }
 
     async function getData(url) {
@@ -65,7 +111,6 @@ const Quiz = () => {
     }
 
 
-
     return (
         <div>
             <section className='quiz-form-section'>
@@ -78,7 +123,7 @@ const Quiz = () => {
                             type='number'
                             defaultValue="10"
                             placeholder='Number of Questions'
-                            min={5}
+                            min={2}
                             max={50}
                             {...register("amount")}
                         />
@@ -105,8 +150,57 @@ const Quiz = () => {
                 </form>
             </section>
 
-            <section ref={quizRef} className='quiz' style={{ height: "100vh", backgroundColor: "#6310c2ff" }} >
-                <p style={{}}>{`I am data ${data[0].type}`}</p>
+            <section ref={quizRef} className='quiz-section'>
+
+                {/* Loading */}
+                {data.length === 0 && (
+                    <div className="quiz-loading">
+                        <span className="quiz-loading-dot" />
+                        <span className="quiz-loading-dot" />
+                        <span className="quiz-loading-dot" />
+                    </div>
+                )}
+
+                {/* Score screen */}
+                {data.length > 0 && currentIndex >= data.length && (
+                    <div className="quiz-score-screen">
+                        <p className="quiz-score-label">Final Score</p>
+                        <h2 className="quiz-score-value">{score}<span>/{data.length}</span></h2>
+                        <p className="quiz-score-sub">{score >= data.length * 0.7 ? '🏆 Great job!' : '📚 Keep practicing!'}</p>
+                    </div>
+                )}
+
+                {/* Question */}
+                {data.length > 0 && currentIndex < data.length && (
+                    <div className="quiz-card-wrap">
+                        <div className="quiz-progress-bar">
+                            <div
+                                className="quiz-progress-fill"
+                                style={{ width: `${((currentIndex) / data.length) * 100}%` }}
+                            />
+                        </div>
+                        <p className="quiz-counter">{currentIndex + 1} / {data.length}</p>
+                        <p className="quiz-question">{data[currentIndex].question}</p>
+                        <div className="quiz-options">
+                            {getOptions(data[currentIndex]).map((option, index) => (
+                                <button
+                                    key={index}
+                                    className="quiz-option-btn"
+                                    onClick={(e) => handleAnswer(option, e)}
+                                >
+                                    <span className="quiz-option-letter">{String.fromCharCode(65 + index)}</span>
+                                    <span className="quiz-option-text">{option}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {tapped && (
+                            <button className="quiz-next-btn" onClick={handleNext}>
+                                Next Question →
+                            </button>
+                        )}
+                    </div>
+                )}
+
             </section>
 
 
